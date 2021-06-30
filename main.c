@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h> // Para usar strings
 
-#include <math.h> // Funcções matemáticas
+#include <math.h> // Funções matemáticas
 
 #ifdef WIN32
 #include <windows.h> // Apenas para Windows
@@ -27,11 +27,11 @@ typedef struct
     unsigned char r, g, b;
 } RGB8;
 
-// A energia de um pixel RGB.
+// A posição de um valor em uma matriz.
 typedef struct
 {
-    unsigned char energy;
-} Energy;
+    unsigned int x, y;
+} Position;
 
 // Uma imagem RGB
 typedef struct
@@ -89,17 +89,33 @@ void seamcarve(int targetWidth)
 {
     // Aplica o algoritmo e gera a saida em target->img...
 
-    RGB8(*ptrTarget)[target->width] = (RGB8(*)[target->width])target->img;
-    unsigned char energies[target->width][target->height];
-
+    // Ponteiro para a imagem de entrada.
     RGB8(*ptrSource)[source->width] = (RGB8(*)[source->width])source->img;
 
-    for (int y = 1; y < target->height - 1; y++)
+    // Ponteiro para a imagem de saída.
+    RGB8(*ptrTarget)[target->width] = (RGB8(*)[target->width])target->img;
+
+    // Matriz de energias dos pixels.
+    int energies[target->height][target->width];
+
+    // Matriz de energias acumuladas.
+    int acumulatedEnergies[target->height][target->width];
+
+    // Preenchendo a matriz de energias acumuladas com valores grandes. 
+    for(int y = 0; y < target->height; y++){
+        for(int x = 0; x < target->width; x++){
+            acumulatedEnergies[y][x] = 999999999;
+        }
+    }
+
+    for (int y = 1; y < target->height-1; y++)
     {
-        for (int x = 1; x < targetW - 1; x++){
+        for (int x = 1; x < targetW-1; x++){
+
             ptrTarget[y][x].r = ptrSource[y][x].r;
             ptrTarget[y][x].g = ptrSource[y][x].g;
             ptrTarget[y][x].b = ptrSource[y][x].b;
+
         }
         for (int x = 1; x < targetW - 1; x++){
 
@@ -115,15 +131,38 @@ void seamcarve(int targetWidth)
 
             int pixelEnergy = deltaX + deltaY;
 
-            energies[x][y] = (unsigned char) pixelEnergy;
-
+            energies[y][x] = pixelEnergy;
         }
+        for (int x = 1; x < targetW - 1; x++){
+            int currentEnergy = acumulatedEnergies[y][x];
+
+            int energyLeft = energies[y+1][x-1];
+            int energyMiddle = energies[y+1][x];
+            int energyRight = energies[y+1][x+1];
+
+            int acumulatedEnergyLeft = acumulatedEnergies[y+1][x-1];
+            int acumulatedEnergyMiddle = acumulatedEnergies[y+1][x];
+            int acumulatedEnergyRight = acumulatedEnergies[y+1][x+1];
+            
+            if(currentEnergy + energyLeft < acumulatedEnergyLeft){
+                acumulatedEnergies[y+1][x-1] = currentEnergy + energyLeft;
+            }
+            if(currentEnergy + energyMiddle < acumulatedEnergyMiddle){
+                acumulatedEnergies[y+1][x] = currentEnergy + energyMiddle;
+            }
+            if(currentEnergy + energyRight < acumulatedEnergyRight){
+                acumulatedEnergies[y+1][x+1] = currentEnergy + energyRight;
+            }
+        }
+        
+        // Achar o menor valor da última linha da matriz de energias acumulada
+
+
+
         for (int x = targetW; x < target->width; x++){
             ptrTarget[y][x].r = ptrTarget[y][x].g = ptrTarget[y][x].b = 0;
         }        
     }
-
-    printf("Energies[30][30]: %d\n", energies[30][30]);
 
     // Chame uploadTexture a cada vez que mudar
     // a imagem (pic[2])
