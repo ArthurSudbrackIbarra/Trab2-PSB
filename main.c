@@ -108,21 +108,22 @@ void seamcarve(int targetWidth)
         }
     }
 
-    for (int y = 1; y < target->height-1; y++)
-    {
-        for (int x = 1; x < targetW-1; x++){
+    // Preenchendo o vetor target com os pixels de source e calculando as energias dos pixels.
+    for (int y = 1; y < target->height-1; y++){
+        for (int x = 1; x < target->width-1; x++){
 
             ptrTarget[y][x].r = ptrSource[y][x].r;
             ptrTarget[y][x].g = ptrSource[y][x].g;
             ptrTarget[y][x].b = ptrSource[y][x].b;
-
-        }
-        for (int x = 1; x < targetW - 1; x++){
-
+        
             int deltaRX = ptrSource[y][x-1].r - ptrSource[y][x+1].r; 
+            // printf("DeltaRX: %d\n", deltaRX);
             int deltaGX = ptrSource[y][x-1].g - ptrSource[y][x+1].g;
+            // printf("DeltaGX: %d\n", deltaGX);
             int deltaBX = ptrSource[y][x-1].b - ptrSource[y][x+1].b;
+            // printf("DeltaBX: %d\n", deltaBX);
             int deltaX = pow(deltaRX, 2) + pow(deltaGX, 2) + pow(deltaBX, 2);
+            // printf("DeltaX: %d\n\n", deltaX);
 
             int deltaRY = ptrSource[y-1][x].r - ptrSource[y+1][x].r;
             int deltaGY = ptrSource[y-1][x].g - ptrSource[y+1][x].g;
@@ -132,8 +133,22 @@ void seamcarve(int targetWidth)
             int pixelEnergy = deltaX + deltaY;
 
             energies[y][x] = pixelEnergy;
+            // printf("[%d][%d] - Pixel Energy: %d\n", y, x, pixelEnergy);
+
+        }     
+    }
+
+    // Printando as energias de cada pixel.
+    for (int y = 1; y < target->height-1; y++){
+        for (int x = 1; x < target->width-1; x++){
+            printf("%d ", energies[y][x]);
         }
-        for (int x = 1; x < targetW - 1; x++){
+        printf("\n");
+    }
+
+    // Preenchendo o vetor de energias acumuladas.
+    for (int y = 1; y < target->height-1; y++){
+        for (int x = 1; x < target->width-1; x++){
             int currentEnergy = acumulatedEnergies[y][x];
 
             int energyLeft = energies[y+1][x-1];
@@ -154,14 +169,59 @@ void seamcarve(int targetWidth)
                 acumulatedEnergies[y+1][x+1] = currentEnergy + energyRight;
             }
         }
+    }
+
+    // Printando a matriz de energias acumuladas.
+    /*for (int y = 1; y < target->height-1; y++){
+        for (int x = 1; x < target->width-1; x++){
+            printf("%d ", acumulatedEnergies[y][x]);
+        }
+        printf("\n");
+    }*/
+
+    // Achando o menor valor da última linha da matriz de energias acumuladas.
+    int lowest = 999999999;
+    int columnOfLowest = -1;
+
+    for(int x = 1; x < target->width-1; x++){
+        int currentValue = acumulatedEnergies[target->height-2][x];
+        if(currentValue < lowest){
+            lowest = currentValue;
+            columnOfLowest = x;
+        }
+    }
+
+    // Começar o percorrimento de baixo para cima para formar a linha de corte.
+    int j = target->height-2;
+    int i = columnOfLowest;
+
+    while(i > 0){
+
+        ptrTarget[j][i].r = 255;
+        ptrTarget[j][i].g = 0;
+        ptrTarget[j][i].b = 0;
+
+        int energyLeft = acumulatedEnergies[j-1][i-1];
+        int energyMiddle = acumulatedEnergies[j][i-1];
+        int energyRight = acumulatedEnergies[j+1][i-1];
+
+        if(energyLeft <= energyMiddle && energyLeft <= energyRight){
+            j--;
+
+        }
+        else if(energyRight <= energyMiddle && energyRight <= energyLeft){
+            j++;
+        }
         
-        // Achar o menor valor da última linha da matriz de energias acumulada
+        i--;
 
+    }
 
-
+    // Preenchendo de preto a última coluna.
+    for (int y = 1; y < target->height-1; y++){
         for (int x = targetW; x < target->width; x++){
             ptrTarget[y][x].r = ptrTarget[y][x].g = ptrTarget[y][x].b = 0;
-        }        
+        } 
     }
 
     // Chame uploadTexture a cada vez que mudar
