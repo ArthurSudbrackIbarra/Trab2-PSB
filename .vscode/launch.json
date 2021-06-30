@@ -9,7 +9,10 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/seamcarving",
-            "args": ["elephant.jpg elephantmask.jpg"],
+            "args": [
+                "elephant.jpg",
+                "elephantmask.jpg"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

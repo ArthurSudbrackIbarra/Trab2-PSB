@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h> // Para usar strings
 
+#include <math.h> // Funcções matemáticas
+
 #ifdef WIN32
 #include <windows.h> // Apenas para Windows
 #endif
@@ -24,6 +26,12 @@ typedef struct
 {
     unsigned char r, g, b;
 } RGB8;
+
+// A energia de um pixel RGB.
+typedef struct
+{
+    unsigned char energy;
+} Energy;
 
 // Uma imagem RGB
 typedef struct
@@ -81,16 +89,42 @@ void seamcarve(int targetWidth)
 {
     // Aplica o algoritmo e gera a saida em target->img...
 
-    RGB8(*ptr)
-    [target->width] = (RGB8(*)[target->width])target->img;
+    RGB8(*ptrTarget)[target->width] = (RGB8(*)[target->width])target->img;
+    unsigned char energies[target->width][target->height];
 
-    for (int y = 0; y < target->height; y++)
+    RGB8(*ptrSource)[source->width] = (RGB8(*)[source->width])source->img;
+
+    for (int y = 1; y < target->height - 1; y++)
     {
-        for (int x = 0; x < targetW; x++)
-            ptr[y][x].r = ptr[y][x].g = 255;
-        for (int x = targetW; x < target->width; x++)
-            ptr[y][x].r = ptr[y][x].g = 0;
+        for (int x = 1; x < targetW - 1; x++){
+            ptrTarget[y][x].r = ptrSource[y][x].r;
+            ptrTarget[y][x].g = ptrSource[y][x].g;
+            ptrTarget[y][x].b = ptrSource[y][x].b;
+        }
+        for (int x = 1; x < targetW - 1; x++){
+
+            int deltaRX = ptrSource[y][x-1].r - ptrSource[y][x+1].r; 
+            int deltaGX = ptrSource[y][x-1].g - ptrSource[y][x+1].g;
+            int deltaBX = ptrSource[y][x-1].b - ptrSource[y][x+1].b;
+            int deltaX = pow(deltaRX, 2) + pow(deltaGX, 2) + pow(deltaBX, 2);
+
+            int deltaRY = ptrSource[y-1][x].r - ptrSource[y+1][x].r;
+            int deltaGY = ptrSource[y-1][x].g - ptrSource[y+1][x].g;
+            int deltaBY = ptrSource[y-1][x].b - ptrSource[y+1][x].b;
+            int deltaY = pow(deltaRY, 2) + pow(deltaGY, 2) + pow(deltaBY, 2);
+
+            int pixelEnergy = deltaX + deltaY;
+
+            energies[x][y] = (unsigned char) pixelEnergy;
+
+        }
+        for (int x = targetW; x < target->width; x++){
+            ptrTarget[y][x].r = ptrTarget[y][x].g = ptrTarget[y][x].b = 0;
+        }        
     }
+
+    printf("Energies[30][30]: %d\n", energies[30][30]);
+
     // Chame uploadTexture a cada vez que mudar
     // a imagem (pic[2])
     uploadTexture();
