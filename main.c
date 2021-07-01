@@ -92,6 +92,9 @@ void seamcarve(int targetWidth)
     // Ponteiro para a imagem de entrada.
     RGB8(*ptrSource)[source->width] = (RGB8(*)[source->width])source->img;
 
+    // Ponteiro para a imagem mask.
+    RGB8(*ptrMask)[mask->width] = (RGB8(*)[mask->width])mask->img;
+
     // Ponteiro para a imagem de saída.
     RGB8(*ptrTarget)[target->width] = (RGB8(*)[target->width])target->img;
 
@@ -115,19 +118,36 @@ void seamcarve(int targetWidth)
             ptrTarget[y][x].r = ptrSource[y][x].r;
             ptrTarget[y][x].g = ptrSource[y][x].g;
             ptrTarget[y][x].b = ptrSource[y][x].b;
-        
-            int deltaRX = ptrSource[y][x-1].r - ptrSource[y][x+1].r; 
-            int deltaGX = ptrSource[y][x-1].g - ptrSource[y][x+1].g;
-            int deltaBX = ptrSource[y][x-1].b - ptrSource[y][x+1].b;
-            int deltaX = pow(deltaRX, 2) + pow(deltaGX, 2) + pow(deltaBX, 2);
 
-            int deltaRY = ptrSource[y-1][x].r - ptrSource[y+1][x].r;
-            int deltaGY = ptrSource[y-1][x].g - ptrSource[y+1][x].g;
-            int deltaBY = ptrSource[y-1][x].b - ptrSource[y+1][x].b;
-            int deltaY = pow(deltaRY, 2) + pow(deltaGY, 2) + pow(deltaBY, 2);
+            int pixelEnergy;
 
-            int pixelEnergy = deltaX + deltaY;
+            // Se na mask o pixel correspondente for verde ou vermelho,
+            // então atribuimos um valor de energia manualmente, caso o
+            // contrário, o cálculo de energia é feito.
+            if(!(ptrMask[y][x].r == 255 && ptrMask[y][x].g == 255 && ptrMask[y][x].b == 255)){
+                // Verde
+                if(ptrMask[y][x].g >= 200){
+                    pixelEnergy = 50000;
+                }
+                // Vermelho
+                else{
+                    pixelEnergy = -50000;
+                }
+            }
+            else{
+                int deltaRX = ptrSource[y][x-1].r - ptrSource[y][x+1].r; 
+                int deltaGX = ptrSource[y][x-1].g - ptrSource[y][x+1].g;
+                int deltaBX = ptrSource[y][x-1].b - ptrSource[y][x+1].b;
+                int deltaX = pow(deltaRX, 2) + pow(deltaGX, 2) + pow(deltaBX, 2);
 
+                int deltaRY = ptrSource[y-1][x].r - ptrSource[y+1][x].r;
+                int deltaGY = ptrSource[y-1][x].g - ptrSource[y+1][x].g;
+                int deltaBY = ptrSource[y-1][x].b - ptrSource[y+1][x].b;
+                int deltaY = pow(deltaRY, 2) + pow(deltaGY, 2) + pow(deltaBY, 2);
+
+                pixelEnergy = deltaX + deltaY;
+            }
+  
             energies[y][x] = pixelEnergy;
 
             if(y == 1){
@@ -136,15 +156,6 @@ void seamcarve(int targetWidth)
 
         }     
     }
-
-    // Printando as energias de cada pixel.
-    /*for (int y = 1; y < target->height-1; y++){
-        for (int x = 1; x < target->width-1; x++){
-            printf("%d ", energies[y][x]);
-        }
-        printf("\n");
-    }
-    printf("\n");*/
 
     // Preenchendo o vetor de energias acumuladas.
     for (int y = 1; y < target->height-1; y++){
@@ -170,14 +181,6 @@ void seamcarve(int targetWidth)
             }
         }
     }
-
-    // Printando a matriz de energias acumuladas.
-    /*for (int y = 1; y < target->height-1; y++){
-        for (int x = 1; x < target->width-1; x++){
-            printf("%d ", acumulatedEnergies[y][x]);
-        }
-        printf("\n");
-    }*/
 
     int width = target->width;
 
@@ -209,10 +212,10 @@ void seamcarve(int targetWidth)
             ptrTarget[i][j].r = 0;
             ptrTarget[i][j].g = 0;
             ptrTarget[i][j].b = 0;
-            
+
             // Definindo valores grandes para a energia e energia acumulada daquele pixel.
-            energies[i][j] = 9999999;
-            acumulatedEnergies[i][j] = 9999999;
+            energies[i][j] = 999999999;
+            acumulatedEnergies[i][j] = 999999999;
 
             int energyLeft = acumulatedEnergies[i-1][j-1];
             int energyMiddle = acumulatedEnergies[i-1][j];
@@ -227,7 +230,7 @@ void seamcarve(int targetWidth)
 
             while(l < width-1){
 
-                // Movendo os pixels.
+                // Movendo os pixels de target.
                 RGB8 aux = ptrTarget[k][l];
                 ptrTarget[k][l] = ptrTarget[k][l+1];
                 ptrTarget[k][l+1] = aux;
@@ -380,12 +383,12 @@ void arrow_keys(int a_keys, int x, int y)
     {
     case GLUT_KEY_RIGHT:
         if (targetW <= pic[2].width - 10)
-            targetW += 10;
+            targetW += 1;
         seamcarve(targetW);
         break;
     case GLUT_KEY_LEFT:
         if (targetW > 10)
-            targetW -= 10;
+            targetW -= 1;
         seamcarve(targetW);
         break;
     default:
