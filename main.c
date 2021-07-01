@@ -188,7 +188,7 @@ void seamcarve(int targetWidth)
         int lowest = 999999999;
         int columnOfLowest = -1;
 
-        for(int x = 1; x < width; x++){
+        for(int x = 1; x < width-1; x++){
             int currentValue = acumulatedEnergies[target->height-2][x];
             if(currentValue < lowest){
                 lowest = currentValue;
@@ -209,6 +209,10 @@ void seamcarve(int targetWidth)
             ptrTarget[i][j].r = 0;
             ptrTarget[i][j].g = 0;
             ptrTarget[i][j].b = 0;
+            
+            // Definindo valores grandes para a energia e energia acumulada daquele pixel.
+            energies[i][j] = 9999999;
+            acumulatedEnergies[i][j] = 9999999;
 
             int energyLeft = acumulatedEnergies[i-1][j-1];
             int energyMiddle = acumulatedEnergies[i-1][j];
@@ -221,7 +225,7 @@ void seamcarve(int targetWidth)
                 j++;
             }
 
-            while(l < width){
+            while(l < width-1){
 
                 // Movendo os pixels.
                 RGB8 aux = ptrTarget[k][l];
@@ -246,13 +250,6 @@ void seamcarve(int targetWidth)
         }
         width--;
     }
-
-    // Preenchendo de preto as colunas.
-    /*for (int y = 1; y < target->height-1; y++){
-        for (int x = targetW; x < target->width; x++){
-            ptrTarget[y][x].r = ptrTarget[y][x].g = ptrTarget[y][x].b = 0;
-        } 
-    }*/
 
     // Chame uploadTexture a cada vez que mudar
     // a imagem (pic[2])
