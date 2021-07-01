@@ -202,9 +202,19 @@ void seamcarve(int targetWidth)
 
     while(i > 0){
 
-        ptrTarget[i][j].r = 255;
+        /*ptrTarget[i][j].r = 255;
         ptrTarget[i][j].g = 0;
-        ptrTarget[i][j].b = 0;
+        ptrTarget[i][j].b = 0;*/
+
+        int k = i;
+        int l = j;
+
+        while(l < target->width - 1){
+            RGB8 aux = ptrTarget[k][l];
+            ptrTarget[k][l] = ptrTarget[k][l+1];
+            ptrTarget[k][l+1] = aux;
+            l++;
+        }
 
         int energyLeft = acumulatedEnergies[i-1][j-1];
         int energyMiddle = acumulatedEnergies[i-1][j];
