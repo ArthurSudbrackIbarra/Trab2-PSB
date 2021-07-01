@@ -117,13 +117,9 @@ void seamcarve(int targetWidth)
             ptrTarget[y][x].b = ptrSource[y][x].b;
         
             int deltaRX = ptrSource[y][x-1].r - ptrSource[y][x+1].r; 
-            // printf("DeltaRX: %d\n", deltaRX);
             int deltaGX = ptrSource[y][x-1].g - ptrSource[y][x+1].g;
-            // printf("DeltaGX: %d\n", deltaGX);
             int deltaBX = ptrSource[y][x-1].b - ptrSource[y][x+1].b;
-            // printf("DeltaBX: %d\n", deltaBX);
             int deltaX = pow(deltaRX, 2) + pow(deltaGX, 2) + pow(deltaBX, 2);
-            // printf("DeltaX: %d\n\n", deltaX);
 
             int deltaRY = ptrSource[y-1][x].r - ptrSource[y+1][x].r;
             int deltaGY = ptrSource[y-1][x].g - ptrSource[y+1][x].g;
@@ -137,7 +133,6 @@ void seamcarve(int targetWidth)
             if(y == 1){
                 acumulatedEnergies[y][x] = pixelEnergy;
             }
-            // printf("[%d][%d] - Pixel Energy: %d\n", y, x, pixelEnergy);
 
         }     
     }
@@ -184,59 +179,80 @@ void seamcarve(int targetWidth)
         printf("\n");
     }*/
 
-    // Achando o menor valor da última linha da matriz de energias acumuladas.
-    int lowest = 999999999;
-    int columnOfLowest = -1;
+    int width = target->width;
 
-    for(int x = 1; x < target->width-1; x++){
-        int currentValue = acumulatedEnergies[target->height-2][x];
-        if(currentValue < lowest){
-            lowest = currentValue;
-            columnOfLowest = x;
+    // Cortando linhas de pixels até chegarmos ao valor de largura da imagem desejado.
+    while(width > targetWidth){
+
+        // Achando o menor valor da última linha da matriz de energias acumuladas.
+        int lowest = 999999999;
+        int columnOfLowest = -1;
+
+        for(int x = 1; x < width; x++){
+            int currentValue = acumulatedEnergies[target->height-2][x];
+            if(currentValue < lowest){
+                lowest = currentValue;
+                columnOfLowest = x;
+            }
         }
+
+        // Começar o percorrimento de baixo para cima para formar a linha de corte.
+        int i = target->height-2;
+        int j = columnOfLowest;
+
+        while(i > 0){
+
+            int k = i;
+            int l = j;
+
+            // Pintando os pixels atuais de preto.
+            ptrTarget[i][j].r = 0;
+            ptrTarget[i][j].g = 0;
+            ptrTarget[i][j].b = 0;
+
+            int energyLeft = acumulatedEnergies[i-1][j-1];
+            int energyMiddle = acumulatedEnergies[i-1][j];
+            int energyRight = acumulatedEnergies[i-1][j+1];
+
+            if(energyLeft <= energyMiddle && energyLeft <= energyRight){
+                j--;
+            }
+            else if(energyRight <= energyMiddle && energyRight <= energyLeft){
+                j++;
+            }
+
+            while(l < width){
+
+                // Movendo os pixels.
+                RGB8 aux = ptrTarget[k][l];
+                ptrTarget[k][l] = ptrTarget[k][l+1];
+                ptrTarget[k][l+1] = aux;
+
+                //Movendo as energias
+                int aux2 = energies[k][l];
+                energies[k][l] = energies[k][l+1];
+                energies[k][l+1] = aux2;
+
+                //Movendo as energias acumuladas
+                int aux3 = acumulatedEnergies[k][l];
+                acumulatedEnergies[k][l] = acumulatedEnergies[k][l+1];
+                acumulatedEnergies[k][l+1] = aux3;
+
+                l++;
+            }
+            
+            i--;
+
+        }
+        width--;
     }
 
-    // Começar o percorrimento de baixo para cima para formar a linha de corte.
-    int i = target->height-2;
-    int j = columnOfLowest;
-
-    while(i > 0){
-
-        /*ptrTarget[i][j].r = 255;
-        ptrTarget[i][j].g = 0;
-        ptrTarget[i][j].b = 0;*/
-
-        int k = i;
-        int l = j;
-
-        while(l < target->width - 1){
-            RGB8 aux = ptrTarget[k][l];
-            ptrTarget[k][l] = ptrTarget[k][l+1];
-            ptrTarget[k][l+1] = aux;
-            l++;
-        }
-
-        int energyLeft = acumulatedEnergies[i-1][j-1];
-        int energyMiddle = acumulatedEnergies[i-1][j];
-        int energyRight = acumulatedEnergies[i-1][j+1];
-
-        if(energyLeft <= energyMiddle && energyLeft <= energyRight){
-            j--;
-        }
-        else if(energyRight <= energyMiddle && energyRight <= energyLeft){
-            j++;
-        }
-        
-        i--;
-
-    }
-
-    // Preenchendo de preto a última coluna.
-    for (int y = 1; y < target->height-1; y++){
+    // Preenchendo de preto as colunas.
+    /*for (int y = 1; y < target->height-1; y++){
         for (int x = targetW; x < target->width; x++){
             ptrTarget[y][x].r = ptrTarget[y][x].g = ptrTarget[y][x].b = 0;
         } 
-    }
+    }*/
 
     // Chame uploadTexture a cada vez que mudar
     // a imagem (pic[2])
