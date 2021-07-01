@@ -10,8 +10,8 @@
             "request": "launch",
             "program": "${workspaceFolder}/seamcarving",
             "args": [
-                "elephant.jpg",
-                "elephantmask.jpg"
+                "ball2.png",
+                "ball2mask.png"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
