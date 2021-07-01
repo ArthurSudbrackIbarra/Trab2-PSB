@@ -27,12 +27,6 @@ typedef struct
     unsigned char r, g, b;
 } RGB8;
 
-// A posição de um valor em uma matriz.
-typedef struct
-{
-    unsigned int x, y;
-} Position;
-
 // Uma imagem RGB
 typedef struct
 {
@@ -230,17 +224,17 @@ void seamcarve(int targetWidth)
 
             while(l < width-1){
 
-                // Movendo os pixels de target.
+                // Deslocando os pixels de target.
                 RGB8 aux = ptrTarget[k][l];
                 ptrTarget[k][l] = ptrTarget[k][l+1];
                 ptrTarget[k][l+1] = aux;
 
-                //Movendo as energias
+                // Deslocando as energias
                 int aux2 = energies[k][l];
                 energies[k][l] = energies[k][l+1];
                 energies[k][l+1] = aux2;
 
-                //Movendo as energias acumuladas
+                // Deslocando as energias acumuladas
                 int aux3 = acumulatedEnergies[k][l];
                 acumulatedEnergies[k][l] = acumulatedEnergies[k][l+1];
                 acumulatedEnergies[k][l+1] = aux3;
